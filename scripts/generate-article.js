@@ -39,8 +39,19 @@ async function generateArticle(topic) {
   return JSON.parse(text);
 }
 
+const IN_ARTICLE_AD = `<div style="margin:24px 0;text-align:center;"><ins class="adsbygoogle" style="display:block;text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="${ADSENSE_ID}" data-ad-slot="auto"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div>`;
+const MULTIPLEX_AD = `<div style="margin:32px 0;"><ins class="adsbygoogle" style="display:block" data-ad-format="autorelaxed" data-ad-client="${ADSENSE_ID}" data-ad-slot="auto"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div>`;
+
+function insertAds(content) {
+  let count = 0;
+  return content.replace(/<h2/g, (match) => {
+    count++;
+    return count === 3 ? IN_ARTICLE_AD + match : match;
+  });
+}
+
 function buildHTML(article) {
-  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${article.title} — ${SITE_NAME}</title><meta name="description" content="${article.excerpt}"><meta name="google-adsense-account" content="${ADSENSE_ID}"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_ID}" crossorigin="anonymous"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter',sans-serif;background:#0f0f1a;color:#d0d0d0;line-height:1.8}.container{max-width:780px;margin:0 auto;padding:40px 20px}a{color:${SITE_COLOR}}h1{font-size:36px;font-weight:800;color:#fff;margin-bottom:16px;line-height:1.2}h2{font-size:24px;font-weight:700;color:#fff;margin:32px 0 12px;padding-top:16px;border-top:1px solid #222}h3{font-size:18px;font-weight:600;color:#e0e0e0;margin:20px 0 8px}p{margin-bottom:16px}ul,ol{margin:0 0 16px 24px}li{margin-bottom:6px}table{width:100%;border-collapse:collapse;margin:16px 0}th,td{padding:10px 14px;border:1px solid #222;text-align:left;font-size:14px}th{background:#1a1a2e;color:#fff;font-weight:600}td{background:#111122}.meta{color:#666;font-size:13px;margin-bottom:24px}.back{display:inline-block;color:${SITE_COLOR};text-decoration:none;font-size:14px;margin-bottom:20px}.affiliate-note{background:#1a1a2e;padding:12px 16px;border-radius:8px;font-size:12px;color:#666;margin-top:40px;border-left:3px solid ${SITE_COLOR}}footer{text-align:center;padding:40px 20px;color:#444;font-size:12px}</style></head><body><div class="container"><a href="../index.html" class="back">&larr; Back to ${SITE_NAME}</a><h1>${article.title}</h1><div class="meta">Updated ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})} • ${SITE_NAME}</div>${article.content}<div class="affiliate-note"><strong>Disclosure:</strong> Some links are affiliate links. We may earn a commission at no extra cost to you.</div></div><footer>${SITE_NAME} &copy; 2026</footer></body></html>`;
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${article.title} — ${SITE_NAME}</title><meta name="description" content="${article.excerpt}"><meta name="google-adsense-account" content="${ADSENSE_ID}"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_ID}" crossorigin="anonymous"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter',sans-serif;background:#0f0f1a;color:#d0d0d0;line-height:1.8}.container{max-width:780px;margin:0 auto;padding:40px 20px}a{color:${SITE_COLOR}}h1{font-size:36px;font-weight:800;color:#fff;margin-bottom:16px;line-height:1.2}h2{font-size:24px;font-weight:700;color:#fff;margin:32px 0 12px;padding-top:16px;border-top:1px solid #222}h3{font-size:18px;font-weight:600;color:#e0e0e0;margin:20px 0 8px}p{margin-bottom:16px}ul,ol{margin:0 0 16px 24px}li{margin-bottom:6px}table{width:100%;border-collapse:collapse;margin:16px 0}th,td{padding:10px 14px;border:1px solid #222;text-align:left;font-size:14px}th{background:#1a1a2e;color:#fff;font-weight:600}td{background:#111122}.meta{color:#666;font-size:13px;margin-bottom:24px}.back{display:inline-block;color:${SITE_COLOR};text-decoration:none;font-size:14px;margin-bottom:20px}.affiliate-note{background:#1a1a2e;padding:12px 16px;border-radius:8px;font-size:12px;color:#666;margin-top:40px;border-left:3px solid ${SITE_COLOR}}footer{text-align:center;padding:40px 20px;color:#444;font-size:12px}</style></head><body><div class="container"><a href="../index.html" class="back">&larr; Back to ${SITE_NAME}</a><h1>${article.title}</h1><div class="meta">Updated ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})} • ${SITE_NAME}</div>${insertAds(article.content)}${MULTIPLEX_AD}<div class="affiliate-note"><strong>Disclosure:</strong> Some links are affiliate links. We may earn a commission at no extra cost to you.</div></div><footer>${SITE_NAME} &copy; 2026</footer></body></html>`;
 }
 
 function updateIndex(articles) {
@@ -70,7 +81,7 @@ function updateIndex(articles) {
   }
   const all = fs.readdirSync(articlesDir).filter(f=>f.endsWith('.html')).map(f => {
     const c = fs.readFileSync(path.join(articlesDir,f),'utf8');
-    const t = c.match(/<title>(.*?) —/); const d = c.match(/content="(.*?)">/);
+    const t = c.match(/<title>(.*?) —/); const d = c.match(/<meta name="description" content="(.*?)">/);
     return t ? { title: t[1], slug: f.replace('.html',''), excerpt: d?d[1]:'' } : null;
   }).filter(Boolean);
   if (all.length) updateIndex(all);
